@@ -1,6 +1,6 @@
-# Gemma 4 12B on L4 — Local Run
+# gemma4-24gb
 
-Personal-use Docker Compose setup. vLLM serves `google/gemma-4-12B-it-qat-w4a16-ct` on a single NVIDIA L4 (24GB).
+Gemma 4 12B on a single 24GB GPU (NVIDIA L4) via vLLM + Docker. Personal-use setup. Serves `google/gemma-4-12B-it-qat-w4a16-ct`.
 
 Deep dives: [ANALYSIS.md](./ANALYSIS.md) (decision rationale), [ARCHITECTURE.md](./ARCHITECTURE.md) (system view).
 
