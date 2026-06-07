@@ -37,7 +37,7 @@ services:
       - -hfd
       - unsloth/gemma-4-E2B-it-GGUF:Q4_K_M
       - --spec-type
-      - draft-simple
+      - draft-simple,ngram-cache
       - --spec-draft-n-max
       - "16"
       - --spec-draft-n-min
