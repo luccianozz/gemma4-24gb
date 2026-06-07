@@ -1,11 +1,11 @@
-"""Minimal client for local vLLM Gemma 4 12B server."""
+"""Minimal client for local Gemma 4 12B server (llama.cpp default, vLLM alt)."""
 
 import os
 import sys
 
 from openai import OpenAI
 
-MODEL = "google/gemma-4-12B-it-qat-w4a16-ct"
+MODEL = os.getenv("MODEL_NAME", "gemma-4-12b")
 
 api_key = os.getenv("VLLM_API_KEY")
 if not api_key:

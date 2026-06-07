@@ -1,8 +1,6 @@
-# Fallback: pinned v0.8.5, no gemma4 parsers (chat works, no auto tool-call / reasoning parse)
-# Use: docker compose -f docker-compose.fallback.yml up -d
 services:
   vllm:
-    image: vllm/vllm-openai:v0.8.5
+    image: vllm/vllm-openai:latest
     container_name: gemma4-12b
     runtime: nvidia
     ipc: host
@@ -18,9 +16,13 @@ services:
       - --max-model-len=32768
       - --gpu-memory-utilization=0.92
       - --kv-cache-dtype=fp8
+      - --enforce-eager
+      - --reasoning-parser=gemma4
+      - --tool-call-parser=gemma4
+      - --enable-auto-tool-choice
       - --api-key=${VLLM_API_KEY}
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -fsS http://localhost:8000/health"]
+      test: ["CMD", "sh", "-c", "curl -fsS -H \"Authorization: Bearer $$VLLM_API_KEY\" http://localhost:8000/v1/models || curl -fsS http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

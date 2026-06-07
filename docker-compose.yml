@@ -1,33 +1,49 @@
 services:
-  vllm:
-    image: vllm/vllm-openai:latest
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
     container_name: gemma4-12b
     runtime: nvidia
-    ipc: host
     ports:
       - "8000:8000"
     volumes:
-      - hf_cache:/root/.cache/huggingface
+      - llama_cache:/root/.cache/llama.cpp
     environment:
-      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
-      - VLLM_API_KEY=${VLLM_API_KEY}
+      - HF_TOKEN=${HF_TOKEN}
     command:
-      - --model=google/gemma-4-12B-it-qat-w4a16-ct
-      - --max-model-len=32768
-      - --gpu-memory-utilization=0.92
-      - --kv-cache-dtype=fp8
-      - --enforce-eager
-      - --reasoning-parser=gemma4
-      - --tool-call-parser=gemma4
-      - --enable-auto-tool-choice
-      - --api-key=${VLLM_API_KEY}
+      - -hf
+      - bartowski/gemma-4-12B-it-GGUF:Q4_K_M
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --n-gpu-layers
+      - "-1"
+      - --flash-attn
+      - --ctx-size
+      - "131072"
+      - --parallel
+      - "16"
+      - --cont-batching
+      - --batch-size
+      - "2048"
+      - --ubatch-size
+      - "1024"
+      - --cache-type-k
+      - q8_0
+      - --cache-type-v
+      - q8_0
+      - --api-key
+      - ${VLLM_API_KEY}
+      - --metrics
+      - --alias
+      - gemma-4-12b
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -fsS -H \"Authorization: Bearer $$VLLM_API_KEY\" http://localhost:8000/v1/models || curl -fsS http://localhost:8000/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 300s
+      start_period: 600s
     restart: unless-stopped
 
 volumes:
-  hf_cache:
+  llama_cache:
