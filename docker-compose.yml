@@ -9,6 +9,7 @@ services:
       - llama_cache:/root/.cache/llama.cpp
     environment:
       - HF_TOKEN=${HF_TOKEN}
+      - VLLM_API_KEY=${VLLM_API_KEY}
     command:
       - -hf
       - bartowski/gemma-4-12B-it-GGUF:Q4_K_M
@@ -44,6 +45,24 @@ services:
       retries: 3
       start_period: 600s
     restart: unless-stopped
+
+  bench:
+    image: python:3.12-slim
+    profiles: ["bench"]
+    container_name: gemma4-12b-bench
+    depends_on:
+      llama:
+        condition: service_healthy
+    environment:
+      - VLLM_API_KEY=${VLLM_API_KEY}
+      - LLAMA_URL=http://llama:8000
+      - MODEL=gemma-4-12b
+      - CONCURRENCY_LEVELS=${CONCURRENCY_LEVELS:-1,4,8,16,32}
+      - MAX_TOKENS=${MAX_TOKENS:-300}
+      - PROMPT=${PROMPT:-Count from 1 to 100, one number per line.}
+    volumes:
+      - ./bench:/bench:ro
+    command: ["sh", "-c", "pip install --quiet --no-cache-dir httpx==0.27.* && python /bench/run.py"]
 
 volumes:
   llama_cache:

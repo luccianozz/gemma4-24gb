@@ -66,6 +66,27 @@ Default = 16 slots × ~8K ctx (in `docker-compose.yml`). Edit `--parallel` + `--
 
 300 concurrent on single L4 = **not viable** (~0.5 tok/s/user). See [ARCHITECTURE.md scaling path](./ARCHITECTURE.md#scaling-path-out-of-scope-documented).
 
+## Benchmark concurrency (built-in)
+
+`bench` service in compose. Hidden behind profile (won't run on `up -d`):
+
+```bash
+# default levels: 1,4,8,16,32
+docker compose --profile bench run --rm bench
+
+# custom levels + prompt
+CONCURRENCY_LEVELS=1,8,32 MAX_TOKENS=500 \
+  docker compose --profile bench run --rm bench
+
+# longer prompt for prefill cost
+PROMPT="Write a detailed essay about quantization." MAX_TOKENS=800 \
+  docker compose --profile bench run --rm bench
+```
+
+Output: per-concurrency table — wall clock, p50 latency, per-user tok/s (avg/min/max), aggregate tok/s.
+
+Replace projected numbers in [ARCHITECTURE.md](./ARCHITECTURE.md) with measured.
+
 ## Stop / restart
 
 ```bash
@@ -100,8 +121,9 @@ docker compose -f docker-compose.vllm.yml up -d
 
 ## Files
 
-- `docker-compose.yml` — llama.cpp service (default)
+- `docker-compose.yml` — llama.cpp service (default) + `bench` profile
 - `docker-compose.vllm.yml` — vLLM service (alt, currently broken upstream)
+- `bench/run.py` — async concurrency benchmark
 - `main.py` — minimal OpenAI-SDK client
 - `requirements.txt` — `openai` only (host-side)
 - `.env.example` — HF token + API key template
