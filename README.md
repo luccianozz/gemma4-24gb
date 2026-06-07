@@ -1,5 +1,7 @@
 # gemma4-24gb
 
+![Architecture](./docs/architecture.png)
+
 Gemma 4 12B on a single 24GB GPU (NVIDIA L4) via vLLM + Docker. Personal-use setup. Serves `google/gemma-4-12B-it-qat-w4a16-ct`.
 
 Deep dives: [ANALYSIS.md](./ANALYSIS.md) (decision rationale), [ARCHITECTURE.md](./ARCHITECTURE.md) (system view).
