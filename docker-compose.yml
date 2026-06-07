@@ -3,6 +3,7 @@ services:
     image: ghcr.io/ggml-org/llama.cpp:server-cuda
     container_name: gemma4-12b
     runtime: nvidia
+    ipc: host
     ports:
       - "8000:8000"
     volumes:

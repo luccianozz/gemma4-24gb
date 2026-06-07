@@ -66,6 +66,35 @@ Default = 16 slots × ~8K ctx (in `docker-compose.yml`). Edit `--parallel` + `--
 
 300 concurrent on single L4 = **not viable** (~0.5 tok/s/user). See [ARCHITECTURE.md scaling path](./ARCHITECTURE.md#scaling-path-out-of-scope-documented).
 
+## Metrics endpoint
+
+llama.cpp exposes Prometheus metrics at `/metrics` (bearer auth required). Wire to your own Prometheus:
+
+```yaml
+# in your prometheus.yml
+- job_name: llama
+  metrics_path: /metrics
+  authorization:
+    credentials: "<VLLM_API_KEY>"
+  static_configs:
+    - targets: ['<host>:8000']
+```
+
+Useful metrics:
+- `llamacpp:tokens_predicted_total` — decode tokens
+- `llamacpp:prompt_tokens_total` — prefill tokens
+- `llamacpp:requests_processing` — active slots
+- `llamacpp:requests_deferred` — queued
+- `llamacpp:n_busy_slots_per_decode` — batch fullness
+- `llamacpp:n_tokens_max` — peak n_tokens (KV high-water proxy)
+
+Verify endpoint:
+```bash
+curl -H "Authorization: Bearer $VLLM_API_KEY" http://localhost:8000/metrics | grep "^llamacpp"
+```
+
+GPU metrics: run `nvcr.io/nvidia/k8s/dcgm-exporter` separately if not already in your stack.
+
 ## Benchmark concurrency (built-in)
 
 `bench` service in compose. Hidden behind profile (won't run on `up -d`):

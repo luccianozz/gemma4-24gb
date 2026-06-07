@@ -122,19 +122,70 @@ L4 hardware total = 24GB. Driver + CUDA runtime ~2GB outside llama.cpp.
 
 KV @ Q8 ≈ **~40 KB/token** for Gemma 12B. 12 GB budget ÷ 40 KB ≈ **~300K tokens total**, comfortable for `--ctx-size 131072` (131K).
 
-### Concurrency / context trade-off matrix
+### Measured throughput on g6.xlarge (1× L4)
 
-| Slots | Per-slot ctx | Per-user tok/s (est) | Aggregate tok/s | Best for |
-|-------|--------------|---------------------|-----------------|----------|
-| 4 | 32K | ~25-35 | ~100-140 | Long-context, low-load |
-| **8** | **16K** | **~15-25** | **~120-200** | **Medium chat (balanced)** |
-| **16** | **8K** | **~7-12** | **~110-190** | **Default — short-chat fleet** |
-| 32 | 4K | ~3-6 | ~95-190 | Quick Q&A, max users |
-| 64 | 2K | ~1.5-3 | ~95-190 | Borderline useful |
+Config: Gemma 4 12B Q4_K_M, Q8 KV, `--parallel 16 --ctx-size 131072 --flash-attn on`.
 
-Hard ceiling: aggregate tok/s plateaus around 150-200 because L4 compute saturates. More slots = more users, lower per-user.
+**Run A — short prompt (~20 tok), decode 300:**
 
-**300 concurrent on single L4 = not viable.** Sub-1 tok/s/user. For 300+ concurrent: 2× A100 80GB or 1× H100 (see Scaling Path).
+| Conc | tps/user | agg | p50 lat |
+|------|----------|-----|---------|
+| 1 | 27.7 | 27 | 11.0s |
+| 4 | 20.7 | 81 | 15.0s |
+| 8 | 12.6 | 98 | 24.4s |
+| **16** | **16.6** | **252** | **19.0s** ★ |
+| 32 | 16.5 | 252 | 28.6s (queue) |
+
+**Run B — medium prompt (~30 tok), decode 500:**
+
+| Conc | tps/user | agg | p50 lat |
+|------|----------|-----|---------|
+| 1 | 27.6 | 27 | 18.3s |
+| 4 | 19.6 | 77 | 25.8s |
+| 8 | 12.1 | 95 | 41.9s |
+| **16** | **16.1** | **248** | **32.3s** ★ |
+| 24 | 14.6 | 158 | 32.6s (bad batching) |
+| 32 | 16.1 | 245 | 48.9s |
+
+**Run C — queue knee (200 decode):**
+
+| Conc | tps/user | agg | p50 lat |
+|------|----------|-----|---------|
+| 16 | 17.0 | 244 | 13.1s |
+| 20 | 17.4 | 172 | 12.6s (uneven) |
+| 24 | 15.4 | 165 | 12.6s (uneven) |
+| 32 | 16.7 | 251 | 19.1s |
+| 48 | 16.8 | 251 | 25.5s |
+| 64 | 16.8 | 250 | 32.0s |
+
+**Run D — long prefill (2000 tok prompt), decode 100:**
+
+| Conc | tps/user | agg | wall |
+|------|----------|-----|------|
+| 1 | 26.5 | 26 | 3.8s |
+| 4 | 14.6 | 38 | 10.5s |
+| 8 | 8.1 | 49 | 16.2s |
+| 16 | 6.9 | **74** | 21.7s |
+
+### Locked-in conclusions
+
+| Finding | Number |
+|---------|--------|
+| **Aggregate ceiling** (short prompts) | **~250-257 tok/s** |
+| **Sweet spot concurrency** | **16** (matches `--parallel 16`) |
+| **Per-user tok/s @ sweet spot** | **~16-17** |
+| Conc=8 droop (real, reproducible) | ~12 tps/user — avoid this batch size |
+| Conc=20-24 worst-case (uneven slots) | ~165 agg — avoid |
+| Past 16 (queue regime) | per-user stable ~16.7, wall scales linearly |
+| Long prefill kills aggregate | 2000-tok prompt → 74 tps/user agg @ 16 conc |
+| Queue depth formula | latency ≈ 13s × ceil(N/16) for 200-tok decode |
+
+### Recommendations
+
+- **Short Q&A workload (≤500 tok prompt + ≤500 tok decode)**: `--parallel 16`, default. Real capacity ~16 simultaneous at ~16 tps/user
+- **Long-prompt workload (>1K tok prompt)**: drop to `--parallel 8`, enable prefix caching for repeated system prompts
+- **Avoid** running close to 20-24 concurrent — uneven slot allocation degrades agg. Either stay ≤16 or accept queue at ≥32
+- **300+ concurrent**: not viable on single L4. 19 batches deep → ~4 min wait for last user. Need 2× A100 80GB or 1× H100.
 
 ## Failure Modes
 
