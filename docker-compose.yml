@@ -16,6 +16,7 @@ services:
       - --max-model-len=32768
       - --gpu-memory-utilization=0.92
       - --kv-cache-dtype=fp8
+      - --enforce-eager
       - --reasoning-parser=gemma4
       - --tool-call-parser=gemma4
       - --enable-auto-tool-choice
