@@ -39,9 +39,11 @@ services:
       - --spec-type
       - draft-simple
       - --spec-draft-n-max
-      - "16"
+      - "24"
       - --spec-draft-n-min
       - "4"
+      - --spec-draft-p-min
+      - "0.4"
       - --gpu-layers-draft
       - "99"
       - --api-key
