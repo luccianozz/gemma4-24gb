@@ -35,7 +35,7 @@ services:
       - --cache-type-v
       - f16
       - -hfd
-      - colefuoco00/gemma-4-12B-it-assistant-GGUF:Q8_0
+      - unsloth/gemma-4-E2B-it-GGUF:Q4_K_M
       - --spec-draft-n-max
       - "16"
       - --spec-draft-n-min
