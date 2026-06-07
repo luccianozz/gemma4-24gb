@@ -19,11 +19,11 @@ services:
       - --n-gpu-layers
       - "-1"
       - --flash-attn
+      - "on"
       - --ctx-size
       - "131072"
       - --parallel
       - "16"
-      - --cont-batching
       - --batch-size
       - "2048"
       - --ubatch-size
