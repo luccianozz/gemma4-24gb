@@ -34,7 +34,7 @@ services:
       - f16
       - --cache-type-v
       - f16
-      - --model-draft-hf
+      - -hfd
       - bartowski/gemma-4-270m-it-GGUF:Q8_0
       - --draft-max
       - "16"
