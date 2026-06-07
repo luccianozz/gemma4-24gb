@@ -7,9 +7,13 @@ from openai import OpenAI
 
 MODEL = "google/gemma-4-12B-it-qat-w4a16-ct"
 
+api_key = os.getenv("VLLM_API_KEY")
+if not api_key:
+    sys.exit("VLLM_API_KEY not set. export it or source .env first.")
+
 client = OpenAI(
     base_url=os.getenv("VLLM_URL", "http://localhost:8000/v1"),
-    api_key="EMPTY",
+    api_key=api_key,
 )
 
 prompt = (

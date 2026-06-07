@@ -10,6 +10,7 @@ services:
       - hf_cache:/root/.cache/huggingface
     environment:
       - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+      - VLLM_API_KEY=${VLLM_API_KEY}
     command:
       - --model=google/gemma-4-12B-it-qat-w4a16-ct
       - --max-model-len=32768
@@ -18,8 +19,9 @@ services:
       - --reasoning-parser=gemma4
       - --tool-call-parser=gemma4
       - --enable-auto-tool-choice
+      - --api-key=${VLLM_API_KEY}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "sh", "-c", "curl -fsS -H \"Authorization: Bearer $$VLLM_API_KEY\" http://localhost:8000/v1/models || curl -fsS http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
