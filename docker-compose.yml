@@ -23,17 +23,25 @@ services:
       - --flash-attn
       - "on"
       - --ctx-size
-      - "131072"
+      - "8192"
       - --parallel
-      - "16"
+      - "2"
       - --batch-size
       - "2048"
       - --ubatch-size
-      - "1024"
+      - "2048"
       - --cache-type-k
-      - q8_0
+      - f16
       - --cache-type-v
-      - q8_0
+      - f16
+      - --model-draft-hf
+      - bartowski/gemma-4-270m-it-GGUF:Q8_0
+      - --draft-max
+      - "16"
+      - --draft-min
+      - "4"
+      - --gpu-layers-draft
+      - "99"
       - --api-key
       - ${VLLM_API_KEY}
       - --metrics
