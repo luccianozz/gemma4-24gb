@@ -35,7 +35,7 @@ services:
       - --cache-type-v
       - f16
       - -hfd
-      - bartowski/gemma-4-270m-it-GGUF:Q8_0
+      - colefuoco00/gemma-4-12B-it-assistant-GGUF:Q8_0
       - --spec-draft-n-max
       - "16"
       - --spec-draft-n-min
