@@ -1,0 +1,30 @@
+services:
+  vllm:
+    image: vllm/vllm-openai:v0.8.5
+    container_name: gemma4-12b
+    runtime: nvidia
+    ipc: host
+    ports:
+      - "8000:8000"
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+    command:
+      - --model=google/gemma-4-12B-it-qat-w4a16-ct
+      - --max-model-len=32768
+      - --gpu-memory-utilization=0.92
+      - --kv-cache-dtype=fp8
+      - --reasoning-parser=gemma4
+      - --tool-call-parser=gemma4
+      - --enable-auto-tool-choice
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    restart: unless-stopped
+
+volumes:
+  hf_cache:
