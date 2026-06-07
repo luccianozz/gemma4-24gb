@@ -7,7 +7,7 @@ Usage:
   python main.py --concurrency 8 --max-tokens 500 "..."
 
 Env:
-  VLLM_API_KEY    bearer token (required)
+  LLAMA_API_KEY    bearer token (required)
   VLLM_URL        base URL, default http://localhost:8000/v1
   MODEL_NAME      model alias, default gemma-4-12b
 """
@@ -26,9 +26,9 @@ BASE_URL = os.getenv("VLLM_URL", "http://localhost:8000/v1")
 
 
 def build_client() -> AsyncOpenAI:
-    api_key = os.getenv("VLLM_API_KEY")
+    api_key = os.getenv("LLAMA_API_KEY")
     if not api_key:
-        sys.exit("VLLM_API_KEY not set. export it or source .env first.")
+        sys.exit("LLAMA_API_KEY not set. export it or source .env first.")
     return AsyncOpenAI(base_url=BASE_URL, api_key=api_key)
 
 

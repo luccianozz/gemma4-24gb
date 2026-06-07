@@ -18,7 +18,7 @@ Default backend: **llama.cpp** (CUDA build). Alt backend: **vLLM** (blocked by u
 │  │ Docker container: gemma4-12b                            │     │
 │  │   image: ghcr.io/ggml-org/llama.cpp:server-cuda         │     │
 │  │   port  8000 (OpenAI-compatible REST + /metrics)        │     │
-│  │   auth  --api-key=$VLLM_API_KEY (Bearer)                │     │
+│  │   auth  --api-key=$LLAMA_API_KEY (Bearer)                │     │
 │  │                                                         │     │
 │  │  ┌─────────────────────────────────────────────────┐    │     │
 │  │  │ llama.cpp server                                │    │     │
@@ -193,7 +193,7 @@ Config: Gemma 4 12B Q4_K_M, Q8 KV, `--parallel 16 --ctx-size 131072 --flash-attn
 |---------|---------|-------|-----|
 | OOM at startup | Container crash before `/health` | Too-large `--ctx-size` × `--parallel` | Lower ctx-size or parallel; verify Q8 KV active |
 | Slow per-user under load | Aggregate fine, individual <5 tok/s | Too many parallel slots | Reduce `--parallel` |
-| 401 on requests | API rejects bearer | Wrong `VLLM_API_KEY` in client | Confirm `.env` matches server-side flag |
+| 401 on requests | API rejects bearer | Wrong `LLAMA_API_KEY` in client | Confirm `.env` matches server-side flag |
 | 404 model name | `model="..."` mismatch | Client passing wrong name | Use `gemma-4-12b` (= `--alias` value) |
 | Cold start ~5-10 min | First `up` slow | HF download (~7.5GB) | Persisted in `llama_cache` volume; warm restart fast |
 | Container restart loop | Repeated crash | Bad flag or missing GPU | `docker compose logs llama` — check first error |
@@ -211,7 +211,7 @@ Config: Gemma 4 12B Q4_K_M, Q8 KV, `--parallel 16 --ctx-size 131072 --flash-attn
 
 ## Security Notes
 
-- `HF_TOKEN` + `VLLM_API_KEY` only in `.env` (gitignored). Never in compose file or code
+- `HF_TOKEN` + `LLAMA_API_KEY` only in `.env` (gitignored). Never in compose file or code
 - `--api-key` enforces bearer on **all** `/v1/*` endpoints (no anon)
 - `/health` + `/metrics` typically unauthenticated — keep port 8000 localhost-only or front with reverse proxy + IP allowlist for `/metrics`
 - llama.cpp downloads GGUF from HF on first boot — verify checksum against `bartowski/gemma-4-12B-it-GGUF` HF page if integrity matters

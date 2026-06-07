@@ -8,3 +8,5 @@ venv/
 .claude
 architecture.html
 .clarc
+nginx/certs/*.crt
+nginx/certs/*.key

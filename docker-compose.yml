@@ -2,6 +2,9 @@ services:
   llama:
     image: ghcr.io/ggml-org/llama.cpp:server-cuda
     container_name: gemma4-12b
+    # Direct host port for default deploys. To run the bundled nginx proxy
+    # (`--profile proxy`) at scale, remove `container_name` + `ports` and
+    # use `expose: ["8000"]` so `--scale llama=N` works.
     runtime: nvidia
     ipc: host
     ports:
@@ -10,7 +13,7 @@ services:
       - llama_cache:/root/.cache/llama.cpp
     environment:
       - HF_TOKEN=${HF_TOKEN}
-      - VLLM_API_KEY=${VLLM_API_KEY}
+      - LLAMA_API_KEY=${LLAMA_API_KEY}
     command:
       - -hf
       - bartowski/gemma-4-12B-it-GGUF:Q4_K_M
@@ -47,7 +50,7 @@ services:
       - --gpu-layers-draft
       - "99"
       - --api-key
-      - ${VLLM_API_KEY}
+      - ${LLAMA_API_KEY}
       - --metrics
       - --reasoning-format
       - deepseek
@@ -56,11 +59,30 @@ services:
       - --alias
       - gemma-4-12b
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -fsS -H \"Authorization: Bearer $$VLLM_API_KEY\" http://localhost:8000/health"]
+      test: ["CMD", "sh", "-c", "curl -fsS -H \"Authorization: Bearer $$LLAMA_API_KEY\" http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 600s
+    restart: unless-stopped
+
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: gemma4-proxy
+    profiles: ["proxy"]
+    depends_on:
+      - llama
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/nginx-health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   bench:
@@ -71,7 +93,7 @@ services:
       llama:
         condition: service_healthy
     environment:
-      - VLLM_API_KEY=${VLLM_API_KEY}
+      - LLAMA_API_KEY=${LLAMA_API_KEY}
       - LLAMA_URL=http://llama:8000
       - MODEL=gemma-4-12b
       - CONCURRENCY_LEVELS=${CONCURRENCY_LEVELS:-1,4,8,16,32}

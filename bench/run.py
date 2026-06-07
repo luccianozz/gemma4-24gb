@@ -5,7 +5,7 @@ aggregate throughput.
 
 Env vars:
   LLAMA_URL          base URL (default http://llama:8000)
-  VLLM_API_KEY       bearer token (required)
+  LLAMA_API_KEY       bearer token (required)
   CONCURRENCY_LEVELS comma list, default "1,4,8,16,32"
   MAX_TOKENS         per request, default 300
   MODEL              model name, default "gemma-4-12b"
@@ -27,7 +27,7 @@ except ImportError:
 
 
 URL = os.environ.get("LLAMA_URL", "http://llama:8000").rstrip("/") + "/v1/chat/completions"
-KEY = os.environ.get("VLLM_API_KEY")
+KEY = os.environ.get("LLAMA_API_KEY")
 LEVELS = [int(x) for x in os.environ.get("CONCURRENCY_LEVELS", "1,4,8,16,32").split(",")]
 MAX_TOKENS = int(os.environ.get("MAX_TOKENS", "300"))
 MODEL = os.environ.get("MODEL", "gemma-4-12b")
@@ -35,7 +35,7 @@ PROMPT = os.environ.get("PROMPT", "Count from 1 to 100, one number per line.")
 WARMUP = os.environ.get("WARMUP", "1") == "1"
 
 if not KEY:
-    sys.exit("VLLM_API_KEY not set")
+    sys.exit("LLAMA_API_KEY not set")
 
 PAYLOAD = {
     "model": MODEL,
